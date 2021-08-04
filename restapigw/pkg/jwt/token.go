@@ -4,7 +4,7 @@ package jwt
 import (
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // ===== [ Constants and Variables ] =====
