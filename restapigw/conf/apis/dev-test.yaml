@@ -1,5 +1,5 @@
 definitions:
-  - name: Splash RateLimit Test
+  - name: Splash RateLimit Test (503)
     active: true
     hosts:
       - host: http://localhost:8100
@@ -14,10 +14,9 @@ definitions:
       - "Testing"
     middleware:
       mw-ratelimit:
-        max_rate: 5
-        client_max_rate: 10
-        strategy: "ip" #header #ip
-        key: "" #"X-Private-Token"
+        max_rate: 10        # 초당 하용할 연결 수
+        fill_interval: 200  # 토큰 충전 간격 (millisecond)
+        fill_count: 1       # 충전 간격당 추가할 토큰 수
     backend:
       - url_pattern: "/shop/campaigns.json"
         whitelist:
@@ -44,10 +43,49 @@ definitions:
                   - "products.*.template_suffix"
                   - "products.*.updated_at"
                   - "products.*.vendor"
-          mw-ratelimit:
-            max_rate: 1
-            capacity: 1
         lb_mode: rr
+  - name: Splash RateLimit Client Test (429)
+    active: true
+    hosts:
+      - host: http://localhost:8100
+    endpoint: "/splash_ratelimit_client"
+    except_querystrings:
+      - "name"
+      - "querystring"
+    except_headers:
+      - "Testing"
+    middleware:
+      mw-ratelimit:
+        client_max_rate: 5  # 초당 허용할 연결 수 (클라이언트 식별 규칙)
+        fill_interval: 100  # 토큰 충전 간격 (millisecond)
+        fill_count: 1       # 충전 간격당 추가할 토큰 수
+        strategy: "ip"      # 클라이언트 식별 규칙 (header / ip)
+        key: ""             # 클라이언트 식별 헤더 (X-Private-Token)
+    backend:
+      - url_pattern: "/shop/campaigns.json"
+        whitelist:
+          - "campaigns"
+        lb_mode: wrr
+  - name: Splash RateLimit Single Backend Test (503)
+    active: true
+    hosts:
+      - host: http://localhost:8100
+    endpoint: "/splash_ratelimit_single"
+    except_querystrings:
+      - "name"
+      - "querystring"
+    except_headers:
+      - "Testing"
+    backend:
+      - url_pattern: "/shop/campaigns.json"
+        whitelist:
+          - "campaigns"
+        lb_mode: wrr
+        middleware:
+          mw-ratelimit:
+            max_rate: 2         # 초당 허용할 연결 수
+            fill_interval: 100  # 토큰 충전 간격 (millisecond)
+            fill_count: 1       # 충전 간격당 추가할 토큰 수
   - name: Splash Test
     active: true
     endpoint: "/splash"

@@ -27,8 +27,9 @@ var (
 
 // Config - Rate Limit 구성을 위한 Configuration 구조
 type Config struct {
-	MaxRate  float64 `yaml:"max_rate"` // 초당 하용할 요청 수
-	Capacity int64   `yaml:"capacity"` // 초당 허용할 최대 요청 수
+	MaxRate      int `yaml:"max_rate"`      // 초당 하용할 요청 수
+	FillInterval int `yaml:"fill_interval"` // Token 충전 기간 (Millisecond)
+	FillCount    int `yaml:"fill_count"`    // FillInterval에 충전할 Token 수
 }
 
 // ===== [ Implementations ] =====
@@ -58,7 +59,7 @@ func NewBackendLimiter(bConf *config.BackendConfig) proxy.CallChain {
 	if conf == nil || conf.MaxRate <= 0 {
 		return proxy.EmptyChain
 	}
-	backendLimiter := ratelimit.NewLimiterWithRate(conf.MaxRate, conf.Capacity)
+	backendLimiter := ratelimit.NewLimiterWithRate(conf.MaxRate, conf.FillInterval, conf.FillCount)
 	return func(next ...proxy.Proxy) proxy.Proxy {
 		if len(next) > 1 {
 			panic(proxy.ErrTooManyProxies)

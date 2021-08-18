@@ -19,8 +19,10 @@ const (
 
 // Config - Rate Limit 적용을 위한 Router Middleware Configuration 구조
 type Config struct {
-	MaxRate       int64  `yaml:"max_rate"`        // 초당 허용할 요청 수
-	ClientMaxRate int64  `yaml:"client_max_rate"` // 클라이언트별 초당 허용할 요청 수
+	MaxRate       int    `yaml:"max_rate"`        // 초당 허용할 요청 수
+	ClientMaxRate int    `yaml:"client_max_rate"` // 클라이언트별 초당 허용할 요청 수
+	FillInterval  int    `yaml:"fill_interval"`   // Token 충전 기간 (Millisecond)
+	FillCount     int    `yaml:"fill_count"`      // FillInterval에 충전할 Token 수
 	Strategy      string `yaml:"strategy"`        // 클라이언트 식별 방법 ('ip', 'header')
 	Key           string `yaml:"key"`             // 클라이언트를 header로 식별할 경우의 header key 값 (ex. X-Private-Token, ...)
 }

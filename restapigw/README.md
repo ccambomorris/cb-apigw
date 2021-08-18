@@ -476,36 +476,45 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
   - **Rate Limit (Endpoint Rate Limit)**
     - 설정이 없거나 0으로 지정된 경우는 무제한 허용
     - Rate Limit는 초당 허용 하는 호출 수를 기준으로 한다. (TokenBucket 알고리즘 적용)
-    - 시간은 연속적인 흐름이므로 지정한 호출 수를 기반으로 사용 비율을 계산하여 1개씩의 호출이 가능하도록 추가한다.
-    - Rate Limit는 Endpoint 단위 또는 Client 단위로 설정 가능하다.
+    - 시간은 연속적인 흐름이므로 지정한 호출 수를 기반으로 지정한 구간 (fill_interval) 마다 지정한 토큰 수 (fille_count) 만큼 TokenBucket에 Token을 충전한다.
+    - Rate Limit는 Endpoint 단위, Client 단위로 개별 설정잉 가능하고 동시 설정도 가능하다. 동시 설정된 경우는 작은 허용 수가 먼저 제한된다.
+    - fill_internval, fill_count를 생략하면 기본 값인 100ms, 2 개를 사용한다.
       - Endpoint 단위 설정
         ```yaml
         middleware:
           mw-ratelimit:
-            maxRate: 10   # Endpoint URL 단위로 초당 10개 호출 허용
+            maxRate: 10         # Endpoint URL 단위로 초당 10개 호출 허용
+            fill_interval: 100  # 100 millisecond 단위로 토큰을 채운다.
+            fill_count: 2       # 100 millisecond 단위로 토큰을 채울 수량
         ```
       - Client 단위 설정
         - Client IP 단위
           ```yaml
           middleware:
             mw-ratelimit:
-              clientMaxRate: 5  # 클라이언트 IP 단위로 초당 5개 허용
+              clientMaxRate: 5    # 클라이언트 IP 단위로 초당 5개 허용
+              fill_interval: 100  # 100 millisecond 단위로 토큰을 채운다.
+              fill_count: 2       # 100 millisecond 단위로 토큰을 채울 수량
               strategy: "ip"
           ```
         - Request에 특정 Header 값을 지정하는 단위
           ```yaml
           middleware:
             mw-ratelimit:
-              clientMaxRate: 5  # 클라이언트의 Request Header에 설정된 값을 기준으로 초당 5개 허용
+              clientMaxRate: 5    # 클라이언트의 Request Header에 설정된 값을 기준으로 초당 5개 허용
+              fill_interval: 100  # 100 millisecond 단위로 토큰을 채운다.
+              fill_count: 2       # 100 millisecond 단위로 토큰을 채울 수량
               strategy: "header"
               key: "<header로 전달할 Key 명, ex. 'X-Private-Token'>"
           ```
-      - Endpoint 및 Client 모두 설정
+      - Endpoint 및 Client 모두 설정 (Endpoint와 Client 중에 먼저 제한이 걸리는 경우에 따라 처리된다)
         ```yaml
         middleware:
           mw-ratelimit:
             maxRate: 10         # Endpoint URL 단위로 초당 10개 허용
             clientMaxRate: 5    # 클라이언트 Rqeuest Header에 설정된 값을 기준으로 초당 5개 허용
+            fill_interval: 100  # 100 millisecond 단위로 토큰을 채운다.
+            fill_count: 2       # 100 millisecond 단위로 토큰을 채울 수량
             strategy: "header"
             key: "X-Private-Token"
         ```
@@ -552,14 +561,16 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
   - **Rate Limit (Endpoint Rate Limit)**
     - 설정이 없거나 0으로 지정된 경우는 무제한 허용
     - Rate Limit는 초당 허용 하는 호출 수를 기준으로 한다. (TokenBucket 알고리즘 적용)
-    - 시간은 연속적인 흐름이므로 지정한 호출 수를 기반으로 사용 비율을 계산하여 1개씩의 호출이 가능하도록 추가한다.
+    - 시간은 연속적인 흐름이므로 지정한 호출 수를 기반으로 지정한 구간 (fill_interval) 마다 지정한 토큰 수 (fille_count) 만큼 TokenBucket에 Token을 충전한다.
+    - fill_internval, fill_count를 생략하면 기본 값인 100ms, 2 개를 사용한다.
     - Rate Limit는 Backend 단위로 설정 가능하다.
       - Backend 단위 설정
         ```yaml
         middleware:
           mw-ratelimit:
-            maxRate: 10   # Backend URL 단위로 초당 10개 호출 허용
-            capacity: 10  # 초당 maxRate 소비 비율로 계산된 구간마다 1개의 토큰을 추가할 수 있는 최대 값 (일반적으로 maxRate == capacity 로 설정)
+            maxRate: 10         # Backend URL 단위로 초당 10개 호출 허용
+            fill_interval: 100  # 100 millisecond 단위로 토큰을 채운다.
+            fill_count: 2       # 100 millisecond 단위로 토큰을 채울 수량
         ```
     - Rate Limit 가 지정되어 호출이 제한 되는 경우에도 여러 개의 Backend가 존재할 수 있으므로 API G/W가 아닌 Backend 호출에 대한 제한이므로 성공한 Backend가 존재하는 경우라면 `200 정상` 으로 상태 코드를 처리한다.
     - 단, 단일 Backend이며 Rate Limit에 걸리는 경우는 `503, Service unavailable` 로 상태 코드를 처리한다.

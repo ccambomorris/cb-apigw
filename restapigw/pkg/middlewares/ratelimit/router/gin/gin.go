@@ -69,13 +69,13 @@ func NewTokenLimiter(te TokenExtractor, ls ratelimit.LimiterStore) RateLimitMidd
 }
 
 // NewIPLimiter - Rate Limit 기능을 IP 기준으로 처리하는 Handler Func 생성 (By Client IP 단위 검증)
-func NewIPLimiter(maxRate float64, capacity int64) RateLimitMiddleware {
-	return NewTokenLimiter(IPTokenExtractor, ratelimit.NewMemoryStore(maxRate, capacity))
+func NewIPLimiter(maxRate int, fillInterval int, fillCount int) RateLimitMiddleware {
+	return NewTokenLimiter(IPTokenExtractor, ratelimit.NewMemoryStore(maxRate, fillInterval, fillCount))
 }
 
 // NewHeaderLimiter - Rate Limit 기능을 Header 기준으로 처리하는 Handler Func 생성 (By Client Header 단위 검증)
-func NewHeaderLimiter(header string, maxRate float64, capacity int64) RateLimitMiddleware {
-	return NewTokenLimiter(HeaderTokenExtractor(header), ratelimit.NewMemoryStore(maxRate, capacity))
+func NewHeaderLimiter(header string, maxRate int, fillInterval int, fillCount int) RateLimitMiddleware {
+	return NewTokenLimiter(HeaderTokenExtractor(header), ratelimit.NewMemoryStore(maxRate, fillInterval, fillCount))
 }
 
 // NewEndpointRateLimiter - Rate Limit 처리를 포함하는 Handler Func 생성 (By Call 단위 검증)
@@ -105,14 +105,14 @@ func HandlerFactory(next ginRouter.HandlerFactory, logger logging.Logger) ginRou
 			}
 
 			if conf.MaxRate > 0 {
-				handlerFunc = NewEndpointRateLimiter(ratelimit.NewLimiterWithRate(float64(conf.MaxRate), conf.MaxRate))(handlerFunc)
+				handlerFunc = NewEndpointRateLimiter(ratelimit.NewLimiterWithRate(conf.MaxRate, conf.FillInterval, conf.FillCount))(handlerFunc)
 			}
 			if conf.ClientMaxRate > 0 {
 				switch strings.ToLower(conf.Strategy) {
 				case "ip":
-					handlerFunc = NewIPLimiter(float64(conf.ClientMaxRate), conf.ClientMaxRate)(handlerFunc)
+					handlerFunc = NewIPLimiter(conf.ClientMaxRate, conf.FillInterval, conf.FillCount)(handlerFunc)
 				case "header":
-					handlerFunc = NewHeaderLimiter(conf.Key, float64(conf.ClientMaxRate), conf.ClientMaxRate)(handlerFunc)
+					handlerFunc = NewHeaderLimiter(conf.Key, conf.ClientMaxRate, conf.FillInterval, conf.FillCount)(handlerFunc)
 				}
 			}
 		}

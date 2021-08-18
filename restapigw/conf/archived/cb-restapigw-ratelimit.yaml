@@ -58,6 +58,8 @@ endpoints:
       mw-ratelimit:
         max_rate: 5
         client_max_rate: 10
+        fill_interval: 100 # millisecond
+        fill_count: 2 # fill token count per fill_interval
         strategy: "ip"  #header #ip
         key: "" #"X-Private-Token"
     backend:
@@ -86,8 +88,9 @@ endpoints:
                   - "products.*.updated_at"
                   - "products.*.vendor"
           mw-ratelimit:
-            max_rate: 1
-            capacity: 1
+            max_rate: 3
+            fill_interval: 100 # millisecond
+            fill_count: 2 # fill token count per fill_interval
   - endpoint: "/sequential"
     backend:
       - url_pattern: "/hotels/1.json"
@@ -179,6 +182,8 @@ endpoints:
       mw-ratelimit:
         max_rate: 10
         client_max_rate: 5
+        fill_interval: 100 # millisecond
+        fill_count: 2 # fill token count per fill_interval
         strategy: "ip"
     backend:
       - host: "http://localhost:1024"
@@ -186,7 +191,8 @@ endpoints:
         middleware:
           mw-ratelimit:
             max_rate: 2
-            capacity: 5
+            fill_interval: 100 # millisecond
+            fill_count: 2 # fill token count per fill_interval
 
   #################
   # For Tumblebug
@@ -196,6 +202,8 @@ endpoints:
       mw-ratelimit:
         max_rate: 100
         client_max_rate: 100
+        fill_interval: 100 # millisecond
+        fill_count: 2 # fill token count per fill_interval
         strategy: "ip"
     backend:
       - host: "http://localhost:1323"
@@ -203,4 +211,5 @@ endpoints:
         middleware:
           mw-ratelimit:
             max_rate: 1
-            capacity: 1
+            fill_interval: 100 # millisecond
+            fill_count: 2 # fill token count per fill_interval
